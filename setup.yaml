@@ -1,0 +1,6 @@
+---
+- hosts: all
+  user: root
+
+- include: tasks/base.yaml
+- include: cosmos.yaml
