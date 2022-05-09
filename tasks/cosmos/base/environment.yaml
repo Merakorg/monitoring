@@ -1,0 +1,73 @@
+- name: Touch relevant files
+  file:
+    dest: "{{ item }}"
+    state: touch
+  with_items:
+    - /root/.{{ prefix }}cosmos.env
+    - /root/.{{ prefix }}cosmos.env.sh
+  when: envvar != []
+
+- name: Create empty environment
+  copy:
+    mode: 0600
+    dest: /root/{{ prefix }}.cosmos.env
+    content: ""
+  when: envvar  == []
+
+- name: Configure COSMOS User environment add or append
+  lineinfile:
+    dest: /root/.{{ prefix }}cosmos.env
+    regexp: ".*{{ item }}.*"
+    line: "{{ item }}"
+    state: present
+  with_items:
+    - "{{ envvar }}"
+  when: envvar != []
+
+- name: Configure COSMOS User environment
+  replace:
+    dest: /root/.{{ prefix }}cosmos.env
+    regexp: ".*{{ item }}.*"
+    replace: "{{ item }}"
+  with_items:
+    - "{{ envvar }}"
+  when: envvar != []
+
+- name: Create empty environment for BASH
+  copy:
+    mode: 0600
+    dest: /root/{{ prefix }}.cosmos.env.sh
+    content: ""
+  when: envvar  == []
+
+- name: Configure COSMOS User environment for BASH add or append
+  lineinfile:
+    dest: /root/.{{ prefix }}cosmos.env.sh
+    regexp: "^.*{{ item }}.*"
+    line: "export {{ item }}"
+    state: present
+  with_items:
+    - "{{ envvar }}"
+  when: envvar != []
+
+- name: Configure COSMOS User environment for BASH
+  replace:
+    dest: /root/.{{ prefix }}cosmos.env.sh
+    regexp: "^.*{{ item }}.*"
+    replace: "export {{ item }}"
+  with_items:
+    - "{{ envvar }}"
+  when: envvar != []
+
+- name: Configure User environment to load cosmos User Environment
+  lineinfile:
+    dest: /root/.bashrc
+    create: true
+    state: present
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  with_items:
+    - {
+        regexp: "^source /root/{{ prefix }}.cosmos.env.sh",
+        line: "source /root/{{ prefix }}.cosmos.env.sh",
+      }

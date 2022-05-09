@@ -1,0 +1,7 @@
+- name: Set chain-id for the CLIENT
+  ini_file:
+    path: "{{cosmospath}}/config/client.toml"
+    section: null
+    option: "chain-id"
+    value: '"{{chainid}}"'
+  when: cosmospath !=  False

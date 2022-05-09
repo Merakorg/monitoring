@@ -1,0 +1,4 @@
+- name: Include task for individual tuning commands
+  include_tasks: "{{item}}"
+  with_fileglob:
+    - "tuning/*.yaml"

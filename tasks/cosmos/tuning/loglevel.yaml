@@ -1,0 +1,7 @@
+- name: Set custom loglevel
+  ini_file:
+    path: "{{cosmospath}}/config/config.toml"
+    section: null
+    option: log_level
+    value: '"info"'
+  when: cosmospath !=  False

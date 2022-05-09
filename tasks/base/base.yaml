@@ -1,0 +1,125 @@
+- name: Set hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: Create resolv.conf
+  copy:
+    dest: "/etc/resolv.conf"
+    content: |
+      nameserver 1.1.1.1
+      nameserver 1.1.1.2
+      nameserver 1.1.1.3
+
+- name: Remove rescue images
+  file: path={{ item }} state=absent
+  with_fileglob: /boot/*rescue*
+
+- name: Configure console
+  copy:
+    dest: /etc/vconsole.conf
+    content: |
+      KEYMAP="{{ console_keymap }}"
+      FONT="{{ console_font }}"
+
+- name: Configure locale
+  copy:
+    dest: /etc/locale.conf
+    content: |
+      LANG="{{ system_locale }}"
+
+- name: Set timezone
+  timezone: name="{{ system_timezone }}"
+
+- name: Remove unhelpful packages
+  package: name={{ item }} state=absent
+  with_items:
+    - "abrt*"
+  ignore_errors: true
+
+- name: Uninstall packages
+  package: name={{ item }} state=absent
+  with_items:
+    - motd-news-config
+    - command-not-found
+    - update-notifier-common
+  ignore_errors: true
+
+- name: Install helpful packages
+  package: name={{ item }} state=present
+  with_items:
+    - bash-completion
+    - bc
+    - sysstat
+    - tmux
+    - curl
+    - ansible
+    - util-linux
+    - tuned
+    - cmake
+    - mc
+    - pipsi
+    - nmap
+    - tar
+    - unzip
+    - rsync
+    - net-tools
+    - joe
+    - make
+    - wget
+    - git
+    - mailutils
+    - aptitude
+    - rake
+    - ruby-dev
+    - libcurl4-openssl-dev
+    - docker.io
+    - jq
+    - mlocate
+    - docker-compose
+    - apt-config-auto-update
+    - landscape-common
+
+  ignore_errors: true
+
+- name: Enable helpful services
+  service: name={{ item }} enabled=yes state=started
+  with_items:
+    - tuned
+    - fstrim.timer
+    - firewalld
+  ignore_errors: true
+
+- name: Change root shell
+  user: name=root shell={{ root_shell }}
+
+- name: Cleaning up
+  file: path={{ item }} state=absent
+  with_items:
+    - /root/.cache
+    - /root/.lesshst
+    - /root/.rnd
+    - /root/anaconda-ks.cfg
+    - /root/setup.retry
+    - /var/tmp/abrt
+
+- name: Set tuned profile to latency-performance
+  shell: /usr/sbin/tuned-adm profile latency-performance
+
+# - name: Set tuned profile for VM's
+#   shell: /usr/sbin/tuned-adm profile virtual-guest
+#   when: virtual
+
+# - name: Set tuned profile for desktop
+#   shell: /usr/sbin/tuned-adm profile desktop
+#   when: chassis == 'desktop' or chassis == 'laptop'
+
+# - name: Set tuned profile for server
+#   shell: /usr/sbin/tuned-adm profile virtual-host
+#   when: chassis == 'server'
+
+- name: Limit Journal file size
+  ini_file:
+    path: /etc/systemd/journald.conf
+    section: Journal
+    option: SystemMaxUse
+    value: 200M

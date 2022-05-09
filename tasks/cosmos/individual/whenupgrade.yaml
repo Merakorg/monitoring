@@ -1,0 +1,19 @@
+- name: Delete cosmos whenupgrade
+  file:
+    dest: "/root/{{ prefix }}whenupgrade"
+    state: absent
+  when: createcommands != True
+
+- name: Create cosmos whenupgrade
+  copy:
+    mode: 0700
+    dest: "/root/{{ prefix }}whenupgrade"
+    content: |
+      #!/usr/bin/env bash
+      whenupgrade(){   local cheight=$(curl -s http://localhost:26657/status | jq -r '.result.sync_info.latest_block_height');   local uheight=$1;   local blktime=6;   local secs="$(echo "scale=0; (($uheight - $cheight) * $blktime)/1" | bc)";   printf "Chain upgrade in %dh %dm\n" $((secs / (60 * 60))) $(((secs % (60*60))/60)); }
+      if [[ ! -z $1 ]]; then
+          whenupgrade $1
+      else
+        echo "Provide block height for upgrade: $0 58400"
+      fi
+  when: createcommands == True

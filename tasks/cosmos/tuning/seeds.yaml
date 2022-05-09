@@ -1,0 +1,7 @@
+- name: Configure Seeds
+  ini_file:
+    path: "{{cosmospath}}/config/config.toml"
+    section: p2p
+    option: seeds
+    value: "'{{ seeds }}'"
+  when: cosmospath !=  False and seeds != False

@@ -1,0 +1,39 @@
+- name: Configure indexer
+  ini_file:
+    path: "{{cosmospath}}/config/config.toml"
+    section: tx_index
+    option: indexer
+    value: "{{indexer}}"
+  when: cosmospath !=  False
+
+- name: Set custom pruning interval
+  ini_file:
+    path: "{{cosmospath}}/config/app.toml"
+    section: null
+    option: pruning
+    value: '"custom"'
+  when: cosmospath !=  False
+
+- name: Set custom pruning-keep-recent
+  ini_file:
+    path: "{{cosmospath}}/config/app.toml"
+    section: null
+    option: pruning-keep-recent
+    value: '"{{pruningkeeprecent}}"'
+  when: cosmospath !=  False
+
+- name: Set custom pruning-interval
+  ini_file:
+    path: "{{cosmospath}}/config/app.toml"
+    section: null
+    option: pruning-interval
+    value: '"10"'
+  when: cosmospath !=  False
+
+- name: Set custom pruning-keep-every
+  ini_file:
+    path: "{{cosmospath}}/config/app.toml"
+    section: null
+    option: pruning-keep-every
+    value: '"0"'
+  when: cosmospath !=  False

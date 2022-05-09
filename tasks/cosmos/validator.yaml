@@ -1,0 +1,4 @@
+- name: Include task for individual validator commands
+  include_tasks: "{{item}}"
+  with_fileglob:
+    - "validator/*.yaml"

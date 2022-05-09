@@ -1,0 +1,9 @@
+- name: Create monitor unmonitored command
+  copy:
+    mode: 0700
+    dest: "/root/go/bin/monitor-unmonitored"
+    content: |
+      #!/bin/sh
+      for each in $(sudo monit status | grep 'monitoring status' -B2 | grep 'Not monitored' -B2 | grep ^Process | awk '{print $2}' | xargs echo); do sudo monit monitor $each; done
+      for each in $(monit status | grep status -B1 | grep -v "OK" | grep -v monitoring | grep 'status' -B1 | grep "^[a-Z]" | awk '{print $2}' | xargs echo); do monit monitor $each; done
+  when: monit == True

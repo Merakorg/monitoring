@@ -1,0 +1,57 @@
+- name: Remove Unit file
+  file:
+    dest: "/etc/systemd/system/{{ prefix }}cosmovisor.service"
+    state: absent
+  notify:
+    - Restart systemd
+  when: systemdfile == false
+
+- name: Create Unit file
+  copy:
+    dest: "/etc/systemd/system/{{ prefix }}cosmovisor.service"
+    content: |
+      [Unit]
+      Description={{ prefix }}Cosmovisor
+      After=network.target
+
+      [Service]
+      User=root
+      Type=simple
+      EnvironmentFile=/root/.{{ prefix }}cosmos.env
+      {% if workingdir != False %}
+      WorkingDirectory={{ workingdir }}
+      {% endif %}
+      {% if customcommand != False %}
+      ExecStart={{ customcommand }}
+      {% else %}
+      {% if cosmovisor != True %}
+      ExecStart={{ chaincommand }} start {{ extrabin }}
+      {% else %}
+      ExecStart=/root/go/bin/cosmovisor start {{ extrabin }}
+      {% endif %}
+      {% endif %}
+      Restart=on-failure
+      RestartSec=30
+      StartLimitInterval=350
+      TimeoutSec=1200
+      StartLimitBurst=10
+      LimitNOFILE=infinity
+
+      [Install]
+      WantedBy=multi-user.target
+  notify:
+    - Restart systemd
+  when: systemdfile == true
+
+- name: Disable service
+  service: name={{ item }} enabled=no state=stopped
+  with_items:
+    - "{{ prefix }}cosmovisor"
+  when: systemdfile != true
+  ignore_errors: true
+
+- name: Enable service
+  service: name={{ item }} enabled=yes state=started
+  with_items:
+    - "{{ prefix }}cosmovisor"
+  when: systemdfile == true

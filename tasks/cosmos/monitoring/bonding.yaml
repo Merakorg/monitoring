@@ -1,0 +1,43 @@
+- name: Remove noti-bond.sh with variables
+  file:
+    dest: "/root/go/bin/noti-{{ prefix }}bond.sh"
+    state: absent
+  when: createcommands != True or monit != True or validator != True
+
+- name: Create noti-bond.sh with variables
+  copy:
+    dest: "/root/go/bin/noti-{{ prefix }}bond.sh"
+    mode: 0755
+    content: |
+      #!/usr/bin/env bash
+      export NOTI_TELEGRAM_TOKEN={{ telegramtoken }}
+      export NOTI_TELEGRAM_CHATID={{ telegramchatid }}
+      echo "🚨 Cosmos BONDING failed at `hostname`" | /root/go/bin/noti -g -m -
+  when: createcommands == True and monit == True and validator == True
+
+- name: Remove monit cosmos bond monitoring
+  file:
+    dest: "{{ monitpath }}/{{ prefix }}validator"
+    state: absent
+  notify:
+    - Restart monit
+
+  when: createcommands != True or monit != True or validator != True
+
+- name: Create monit cosmos bonding monitoring
+  copy:
+    dest: "{{ monitpath }}/{{ prefix }}validator"
+    content: |
+      check program {{ prefix }}ValidatorStatus with path "/root/{{ prefix }}query-node-status"
+          if status > 0 then alert
+          if status > 0  then exec "/root/go/bin/noti-{{ prefix }}bond.sh"
+            repeat every 1 cycles
+  when: createcommands == True and monit == True and validator == True
+  notify:
+    - Restart monit
+
+- name: Remove noti-service.sh with variables
+  file:
+    dest: "/root/go/bin/noti-{{ prefix }}service.sh"
+    state: absent
+  when: createcommands != True or monit != True

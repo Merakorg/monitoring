@@ -1,0 +1,29 @@
+- name: Setup cosmovisor
+  shell:     go install github.com/cosmos/cosmos-sdk/cosmovisor/cmd/cosmovisor@v1.0.0
+  args:
+    chdir: /root/go/bin
+    creates: /root/go/bin/cosmovisor
+  when: cosmovisor == True
+
+- name: Create folders
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0755
+    owner: root
+    group: root
+  with_items:
+    - "{{ cosmospath }}/cosmovisor"
+    - "{{ cosmospath }}/cosmovisor/genesis"
+    - "{{ cosmospath }}/cosmovisor/genesis/bin"
+    - "{{ cosmospath }}/cosmovisor/upgrades"
+  when: cosmovisor == True
+
+# - name: Copy chain command to cosmovisor actual status
+#   copy:
+#     src: "{{ chaincommand }}"
+#     dest: "{{ cosmospath }}/cosmovisor/genesis/bin"
+#     owner: root
+#     group: root
+#     mode: 0755
+#   when: cosmovisor == True
