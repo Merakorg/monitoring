@@ -1,0 +1,14 @@
+- name: Delete cosmos havevoted
+  file:
+    dest: "/root/{{ prefix }}havevoted"
+    state: absent
+  when: createcommands != True and validator != True
+
+- name: Create cosmos havevoted
+  copy:
+    mode: 0700
+    dest: "/root/{{ prefix }}havevoted"
+    content: |
+      #!/usr/bin/env bash
+      curl -s {% if node != False %}{{ node }}{% else %}http://localhost:{{rpcport}}{% endif %}/dump_consensus_state | jq '.result.round_state.votes[0].prevotes' | grep $(curl -s {% if node != False %}{{ node }}{% else %}http://localhost:{{rpcport}}{% endif %}/status | jq -r '.result.validator_info.address[:12]')
+  when: createcommands == True and validator == True
