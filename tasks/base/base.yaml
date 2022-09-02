@@ -69,8 +69,6 @@
     - git
     - mailutils
     - aptitude
-    - rake
-    - ruby-dev
     - libcurl4-openssl-dev
     - docker.io
     - jq
@@ -78,6 +76,7 @@
     - docker-compose
     - apt-config-auto-update
     - landscape-common
+    - popularity-contest
 
   ignore_errors: true
 
@@ -102,8 +101,8 @@
     - /root/setup.retry
     - /var/tmp/abrt
 
-- name: Set tuned profile to latency-performance
-  shell: /usr/sbin/tuned-adm profile latency-performance
+- name: Set tuned profile to throughput-performance
+  shell: /usr/sbin/tuned-adm profile throughput-performance
 
 # - name: Set tuned profile for VM's
 #   shell: /usr/sbin/tuned-adm profile virtual-guest

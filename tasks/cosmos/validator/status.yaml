@@ -12,7 +12,7 @@
       #!/usr/bin/env bash
       . /root/.{{ prefix }}cosmos.env.sh
       export HOME={{ ansible_user_dir }}
-      OUTPUT=$({{ chaincommand }} query staking validators --limit 2000 -o json {{ extrabin }} {% if node != False %}--node {{ node }}{% endif %} | jq -r '.validators[] | [.operator_address, .status, (.tokens|tonumber / pow(10; 6)), .commission.update_time[0:19], .description.moniker] | @csv' | column -t -s','|sort -k 3 -V -r|grep {{ operaddress }})
+      OUTPUT=$({{ chaincommand }} query staking validators --limit 2000 -o json {{ extrabin }} {% if node != False %}--node {{ node }}{% endif %} | jq -r '.validators[] | [.operator_address, .status, (.tokens|tonumber / pow(10; 6)), .commission.update_time[0:19], .description.moniker] | @csv' | column -t -s','|sort -k 3 -V -r|grep {{ ansible_local['nodevaladdress']['nodevaladdress'] }})
       echo ${OUTPUT}
       [ "$(echo ${OUTPUT} |awk '{ print $2}'|xargs echo)" == "BOND_STATUS_BONDED" ] && exit 0
       if [ "$(echo ${OUTPUT} |awk '{ print $2}'|xargs echo)" == "BOND_STATUS_UNBONDED" ] || [ "$(echo ${OUTPUT} |awk '{ print $2}'|xargs echo)" == "BOND_STATUS_UNBONDING" ]; then
