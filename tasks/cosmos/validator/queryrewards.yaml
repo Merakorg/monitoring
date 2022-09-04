@@ -1,0 +1,16 @@
+- name: Delete cosmos query rewards command
+  file:
+    dest: "/root/{{ prefix }}query-rewards"
+    state: absent
+  when: createcommands != True and validator != True
+
+- name: Create cosmos query rewards command
+  copy:
+    mode: 0700
+    dest: "/root/{{ prefix }}query-rewards"
+    content: |
+      #!/usr/bin/env bash
+      . /root/.{{ prefix }}cosmos.env.sh
+      {{ chaincommand }} query distribution rewards {{ ansible_local['nodeaddress']['nodeaddress'] }} {{ extrabin }} {% if node != False %}--node {{ node }}{% endif %}  $*
+      {{ chaincommand }} query distribution commission {{ ansible_local['nodevaladdress']['nodevaladdress'] }} {{ extrabin }} {% if node != False %}--node {{ node }}{% endif %}  $*
+  when: createcommands == True and validator == True

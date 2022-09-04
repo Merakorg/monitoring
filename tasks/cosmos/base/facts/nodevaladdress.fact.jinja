@@ -1,0 +1,2 @@
+#!/bin/bash
+echo "{\"nodevaladdress\" : \"$({% if passphrase != False %}echo {{passphrase}} | {% endif %} {{ chaincommand }} keys show {{ from }} --bech val {% if backend != False %}--keyring-backend {{ backend }}{% endif %} {{ extrabin }} |grep address|cut -d ":" -f 2-|xargs echo)\"}"

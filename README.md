@@ -1,5 +1,5 @@
 ---
-modified: 2022-03-11T12:59:30.391Z
+modified: 2022-09-04T16:27:35.571Z
 ---
 
 # Playbook
@@ -7,7 +7,6 @@ modified: 2022-03-11T12:59:30.391Z
 In order to use them:
 
 `ansible-playbook -i allhosts setup.yml`
-
 
 It will install and configure 'monit' for monitoring your hosts as well as alerts via Telegram using 'noti' and email
 
@@ -21,7 +20,7 @@ all:
     autostake: False
     claimsend: False
     backend: "file"
-    
+
     envvar: ""
     identity: "KEYBASEID"
     monitpath: "/etc/monit/conf.d/"

@@ -1,0 +1,46 @@
+- name: Disable state-sync snapshots
+  ini_file:
+    path: "{{cosmospath}}/config/app.toml"
+    section: state-sync
+    option: snapshot-interval
+    value: 0
+  when: cosmospath !=  False
+# - name: Enable state-sync consumption
+#   ini_file:
+#     path: "{{cosmospath}}/config/app.toml"
+#     section: state-sync
+#     option: enable
+#     value: true
+#   when: cosmospath !=  False
+
+# - name: Enable state-sync period
+#   ini_file:
+#     path: "{{cosmospath}}/config/app.toml"
+#     section: state-sync
+#     option: trust_period
+#     value: '336h'
+#   when: cosmospath !=  False
+
+# - name: Enable state-sync hash
+#   ini_file:
+#     path: "{{cosmospath}}/config/app.toml"
+#     section: state-sync
+#     option: trust_hash
+#     value: ''
+#   when: cosmospath !=  False
+
+# - name: Enable state-sync height
+#   ini_file:
+#     path: "{{cosmospath}}/config/app.toml"
+#     section: state-sync
+#     option: trust_height
+#     value: ''
+#   when: cosmospath !=  False
+
+# - name: Enable state-sync rpc
+#   ini_file:
+#     path: "{{cosmospath}}/config/app.toml"
+#     section: state-sync
+#     option: rpc_servers
+#     value: '{{ node }}'
+#   when: cosmospath !=  False

@@ -1,0 +1,48 @@
+- name: Delete cosmos balance query command
+  file:
+    dest: "/root/{{ prefix }}query-balance"
+    state: absent
+  when: createcommands != True
+
+- name: Create cosmos balance query command
+  copy:
+    mode: 0700
+    dest: "/root/{{ prefix }}query-balance"
+    content: |
+      #!/usr/bin/env bash
+      . /root/.{{ prefix }}cosmos.env.sh
+
+      if [ "x${1}" != "x" ]; then
+        ADDRESS=${1}
+      else
+        ADDRESS="{{ ansible_local['nodeaddress']['nodeaddress'] }}"
+      fi
+
+      {{ chaincommand }} query bank balances ${ADDRESS} {{ extrabin }} {% if node != False %}--node {{ node }}{% endif %} ${@: 2}
+  when: createcommands == True
+
+
+- name: Delete cosmos balance get command
+  file:
+    dest: "/root/go/bin/{{ prefix }}get-balance"
+    state: absent
+  when: createcommands != True
+
+- name: Create cosmos balance query command
+  copy:
+    mode: 0700
+    dest: "/root/go/bin/{{ prefix }}get-balance"
+    content: |
+      #!/usr/bin/env bash
+
+      TOKEN='{{ token }}'
+
+      # Get balance or zero
+      BALANCE=$(/root/{{ prefix }}query-balance $* |grep ${TOKEN} -B1 | grep amount|cut -d ":" -f2-|xargs echo|cut -d "." -f 1)
+
+      if [ "x${BALANCE}" == "x" ]; then
+          BALANCE=0
+      fi
+
+      echo ${BALANCE}
+  when: createcommands == True
