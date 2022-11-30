@@ -1,10 +1,22 @@
-- name: Disable state-sync snapshots
-  ini_file:
-    path: "{{cosmospath}}/config/app.toml"
-    section: state-sync
-    option: snapshot-interval
-    value: 0
-  when: cosmospath !=  False
+---
+  - name: Enable state-sync snapshots
+    ini_file:
+      path: "{{cosmospath}}/config/app.toml"
+      section: state-sync
+      option: snapshot-interval
+      value: 1000
+    when: cosmospath !=  False
+
+
+  - name: Adjust state-sync keep-recent
+    ini_file:
+      path: "{{cosmospath}}/config/app.toml"
+      section: state-sync
+      option: snapshot-keep-recent
+      value: 2
+    when: cosmospath !=  False
+
+
 # - name: Enable state-sync consumption
 #   ini_file:
 #     path: "{{cosmospath}}/config/app.toml"

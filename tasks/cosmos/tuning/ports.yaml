@@ -1,39 +1,40 @@
-- name: Set custom RPC port
-  ini_file:
-    path: "{{cosmospath}}/config/config.toml"
-    section: "rpc"
-    option: "laddr"
-    value: "'{{rpcbind}}:{{rpcport}}'"
-  when: cosmospath !=  False
+---
+  - name: Set custom RPC port
+    ini_file:
+      path: "{{cosmospath}}/config/config.toml"
+      section: "rpc"
+      option: "laddr"
+      value: "'{{rpcbind}}:{{rpcport}}'"
+    when: cosmospath !=  False
 
-- name: Set custom Service P2P port
-  ini_file:
-    path: "{{cosmospath}}/config/config.toml"
-    section: "p2p"
-    option: "laddr"
-    value: "'tcp://0.0.0.0:{{serviceport}}'"
-  when: cosmospath !=  False
+  - name: Set custom Service P2P port
+    ini_file:
+      path: "{{cosmospath}}/config/config.toml"
+      section: "p2p"
+      option: "laddr"
+      value: "'tcp://0.0.0.0:{{serviceport}}'"
+    when: cosmospath !=  False
 
-- name: Set custom GRPC port
-  ini_file:
-    path: "{{cosmospath}}/config/app.toml"
-    section: "grpc"
-    option: "address"
-    value: "'0.0.0.0:{{grpcport}}'"
-  when: cosmospath !=  False
+  - name: Set custom GRPC port
+    ini_file:
+      path: "{{cosmospath}}/config/app.toml"
+      section: "grpc"
+      option: "address"
+      value: "'0.0.0.0:{{grpcport}}'"
+    when: cosmospath !=  False
 
-- name: Set custom GRPC web port
-  ini_file:
-    path: "{{cosmospath}}/config/app.toml"
-    section: "grpc-web"
-    option: "address"
-    value: "'0.0.0.0:{{grpcwebport}}'"
-  when: cosmospath !=  False
+  - name: Set custom GRPC web port
+    ini_file:
+      path: "{{cosmospath}}/config/app.toml"
+      section: "grpc-web"
+      option: "address"
+      value: "'0.0.0.0:{{grpcwebport}}'"
+    when: cosmospath !=  False
 
-- name: Set custom RPC port for the CLIENT
-  ini_file:
-    path: "{{cosmospath}}/config/client.toml"
-    section: null
-    option: "node"
-    value: "'tcp://127.0.0.1:{{rpcport}}'"
-  when: cosmospath !=  False
+  - name: Set custom RPC port for the CLIENT
+    ini_file:
+      path: "{{cosmospath}}/config/client.toml"
+      section:
+      option: "node"
+      value: "'tcp://127.0.0.1:{{rpcport}}'"
+    when: cosmospath !=  False

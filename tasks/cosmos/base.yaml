@@ -1,10 +1,11 @@
-- name: Include task for individual base commands
-  include_tasks: "{{item}}"
-  with_fileglob:
-    - "base/*.yaml"
+---
+  - name: Include task for individual base commands
+    include_tasks: "{{item}}"
+    loop: "{{ query('fileglob', 'base/*.yaml') | sort }}"
 
-- name: Stop monit if unused
-  service:
-    name: monit
-    state: stopped
-  when: monit == False
+  - name: Stop monit if unused
+    service:
+      name: monit
+      state: stopped
+    when: monit == False
+    ignore_errors: true

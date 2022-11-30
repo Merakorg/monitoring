@@ -1,24 +1,21 @@
-- name: Install helpful packages
-  package: name={{ item }} state=present
-  with_items:
-    - firewalld
-  ignore_errors: true
-  when: sshpassword==True
+---
+  - name: Install helpful packages
+    package: name={{ item }} state=present
+    with_items:
+      - firewalld
+    ignore_errors: true
+    when: sshpassword==True
 
+  - name: Enable helpful services
+    service: name={{ item }} enabled=yes state=started
+    with_items:
+      - firewalld
+    ignore_errors: true
 
-
-- name: Enable helpful services
-  service: name={{ item }} enabled=yes state=started
-  with_items:
-
-
-    - firewalld
-  ignore_errors: true
-
-
-- name: Cosmos Firewall Rule
-  firewalld:
-    port: "{{ serviceport }}/tcp"
-    permanent: true
-    state: enabled
-    immediate: yes
+  - name: Cosmos Firewall Rule
+    firewalld:
+      port: "{{ serviceport }}/tcp"
+      permanent: true
+      state: enabled
+      immediate: yes
+    ignore_errors: true

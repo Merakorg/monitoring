@@ -1,2 +1,2 @@
 #!/bin/bash
-echo "{\"nodeaddress\" : \"$({% if passphrase != False %}echo {{passphrase}} | {% endif %} {{ chaincommand }} keys show {{ from }} {% if backend != False %}--keyring-backend {{ backend }}{% endif %} {{ extrabin }} |grep address|cut -d ":" -f 2-|xargs echo)\"}"
+echo "{\"nodeaddress\" : \"$({% if passphrase != False %}echo {{passphrase}} | {% endif %} {% if cosmovisor != False %}{{ cosmospath }}/cosmovisor/current/bin/{{chaincommand}}{% else %}/root/go/bin/{{chaincommand}}{% endif %} keys show {{ from }} {% if backend != False %}--keyring-backend {{ backend }}{% endif %} {{ extrabin }} |grep address|cut -d ":" -f 2-|xargs echo)\"}"

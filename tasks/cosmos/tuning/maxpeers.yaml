@@ -1,15 +1,16 @@
-- name: Configure max outbound
-  ini_file:
-    path: "{{cosmospath}}/config/config.toml"
-    section: p2p
-    option: max_num_outbound_peers
-    value: "'{{ outbound }}'"
-  when: cosmospath !=  False and outbound != False
+---
+  - name: Configure max outbound
+    ini_file:
+      path: "{{cosmospath}}/config/config.toml"
+      section: p2p
+      option: max_num_outbound_peers
+      value: "'{{ outbound }}'"
+    when: cosmospath !=  False and outbound != False
 
-- name: Configure max inbound
-  ini_file:
-    path: "{{cosmospath}}/config/config.toml"
-    section: p2p
-    option: max_num_inbound_peers
-    value: "'{{ inbound }}'"
-  when: cosmospath !=  False and inbound != False
+  - name: Configure max inbound
+    ini_file:
+      path: "{{cosmospath}}/config/config.toml"
+      section: p2p
+      option: max_num_inbound_peers
+      value: "'{{ inbound }}'"
+    when: cosmospath !=  False and inbound != False

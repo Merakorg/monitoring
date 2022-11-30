@@ -1,40 +1,36 @@
-- name: Create go bin path
-  file:
-    path: /root/go/bin
-    state: directory
-    owner: root
-    group: root
-    mode: "0755"
+---
+  - name: Create go bin path
+    file:
+      path: /root/go/bin
+      state: directory
+      owner: root
+      group: root
+      mode: "0755"
 
-- name: Configure User environment
-  lineinfile:
-    dest: /root/.bashrc
-    create: true
-    state: present
-    regexp: "{{ item.regexp }}"
-    line: "{{ item.line }}"
-  with_items:
-    - {
-        regexp: "^export NOTI_TELEGRAM_CHATID.*",
-        line: "export NOTI_TELEGRAM_CHATID={{ telegramchatid }}",
-      }
-    - {
-        regexp: "^export NOTI_TELEGRAM_TOKEN.*",
-        line: "export NOTI_TELEGRAM_TOKEN={{ telegramtoken }}",
-      }
+  - name: Configure User environment
+    lineinfile:
+      dest: /root/.bashrc
+      create: true
+      state: present
+      regexp: "{{ item.regexp }}"
+      line: "{{ item.line }}"
+    with_items:
+      - {regexp: "^export NOTI_TELEGRAM_CHATID.*", line: "export NOTI_TELEGRAM_CHATID={{ telegramchatid }}"}
+      - {regexp: "^export NOTI_TELEGRAM_TOKEN.*", line: "export NOTI_TELEGRAM_TOKEN={{ telegramtoken }}"}
 
-- name: Download noti binary
-  shell: curl -L $(curl -s https://api.github.com/repos/variadico/noti/releases/latest | awk '/browser_download_url/ { print $2 }' | grep 'linux-amd64' | sed 's/"//g') | tar -xz
-  args:
-    chdir: /root/go/bin
-    creates: /root/go/bin/noti
+  - name: Download noti binary
+    shell: curl -L $(curl -s https://api.github.com/repos/variadico/noti/releases/latest | awk '/browser_download_url/ { print $2 }' | grep 'linux-amd64'
+      | sed 's/"//g') | tar -xz
+    args:
+      chdir: /root/go/bin
+      creates: /root/go/bin/noti
 
-- name: Create noti.sh with variables
-  copy:
-    dest: "/root/go/bin/noti.sh"
-    mode: 0755
-    content: |
-      #!/usr/bin/env bash
-      export NOTI_TELEGRAM_TOKEN={{ telegramtoken }}
-      export NOTI_TELEGRAM_CHATID={{ telegramchatid }}
-      echo "Something failed at `hostname`" | /root/go/bin/noti -g -m -
+  - name: Create noti.sh with variables
+    copy:
+      dest: "/root/go/bin/noti.sh"
+      mode: 0755
+      content: |
+        #!/usr/bin/env bash
+        export NOTI_TELEGRAM_TOKEN={{ telegramtoken }}
+        export NOTI_TELEGRAM_CHATID={{ telegramchatid }}
+        echo "Something failed at {{ inventory_hostname_short }}" | /root/go/bin/noti -g -m -

@@ -1,7 +1,8 @@
-- name: Set minimum gas prices
-  ini_file:
-    path: "{{cosmospath}}/config/app.toml"
-    section: null
-    option: minimum-gas-prices
-    value: "'{{ minimum_gas_prices }}{{token}}'"
-  when: cosmospath !=  False and minimum_gas_prices != False
+---
+  - name: Set minimum gas prices
+    ini_file:
+      path: "{{cosmospath}}/config/app.toml"
+      section:
+      option: minimum-gas-prices
+      value: "'{{ minimum_gas_prices }}{{token}}'"
+    when: cosmospath !=  False and minimum_gas_prices != False

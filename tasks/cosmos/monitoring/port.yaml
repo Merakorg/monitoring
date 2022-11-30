@@ -1,54 +1,55 @@
-- name: Remove noti-port.sh with variables
-  file:
-    dest: "/root/go/bin/noti-{{ prefix }}port.sh"
-    state: absent
-  when: createcommands != True or monit != True
+---
+  - name: Remove noti-port.sh with variables
+    file:
+      dest: "/root/go/bin/noti-{{ prefix }}port.sh"
+      state: absent
+    when: createcommands != True or monit != True
 
-- name: Create noti-port.sh with variables
-  copy:
-    dest: "/root/go/bin/noti-{{ prefix }}port.sh"
-    mode: 0755
-    content: |
-      #!/usr/bin/env bash
-      export NOTI_TELEGRAM_TOKEN={{ telegramtoken }}
-      export NOTI_TELEGRAM_CHATID={{ telegramchatid }}
-      echo "🚨 Cosmos PORT failed at `hostname`" | /root/go/bin/noti -g -m -
-  when: createcommands == True and monit == True
+  - name: Create noti-port.sh with variables
+    copy:
+      dest: "/root/go/bin/noti-{{ prefix }}port.sh"
+      mode: 0755
+      content: |
+        #!/usr/bin/env bash
+        export NOTI_TELEGRAM_TOKEN={{ telegramtoken }}
+        export NOTI_TELEGRAM_CHATID={{ telegramchatid }}
+        echo "🚨 Cosmos PORT failed at {{ inventory_hostname_short }}" | /root/go/bin/noti -g -m -
+    when: createcommands == True and monit == True
 
-- name: Remove monit cosmos port monitoring
-  file:
-    dest: "{{ monitpath }}/{{ prefix }}cosmos"
-    state: absent
-  notify:
-    - Restart monit
-  when: createcommands != True or monit != True or validator != True
+  - name: Remove monit cosmos port monitoring
+    file:
+      dest: "{{ monitpath }}/{{ prefix }}cosmos"
+      state: absent
+    notify:
+      - Restart monit
+    when: createcommands != True or monit != True or validator != True
 
-- name: Create monit cosmos port monitoring (without restart)
-  copy:
-    dest: "{{ monitpath }}/{{ prefix }}cosmos"
-    content: |
-      check host {{ prefix }}Validator with address 127.0.0.1
-          if failed port {{ serviceport }} type tcp then alert
-          if failed port {{ serviceport }} type tcp then exec "/root/go/bin/noti-{{ prefix }}port.sh"
-            repeat every 1 cycles
-  notify:
-    - Restart monit
+  - name: Create monit cosmos port monitoring (without restart)
+    copy:
+      dest: "{{ monitpath }}/{{ prefix }}cosmos"
+      content: |
+        check host {{ prefix }}Validator with address 127.0.0.1
+            if failed port {{ serviceport }} type tcp then alert
+            if failed port {{ serviceport }} type tcp then exec "/root/go/bin/noti-{{ prefix }}port.sh"
+              repeat every 1 cycles
+    notify:
+      - Restart monit
 
-  when: systemdfile == false and createcommands == True and monit == True and validator == True
+    when: systemdfile == false and createcommands == True and monit == True and validator == True
 
-- name: Create monit cosmos port monitoring (with restart)
-  copy:
-    dest: "{{ monitpath }}/{{ prefix }}cosmos"
-    content: |
-      check host {{ prefix }}Validator with address 127.0.0.1
-          start program = "/usr/bin/systemctl start {{ prefix }}cosmovisor"
-              as uid root and gid root
-          stop program = "/usr/bin/systemctl stop {{ prefix }}cosmovisor"
-          if failed port {{ serviceport }} type tcp then restart
-          if failed port {{ serviceport }} type tcp then exec "/root/go/bin/noti-{{ prefix }}port.sh"
-            repeat every 1 cycles
+  - name: Create monit cosmos port monitoring (with restart)
+    copy:
+      dest: "{{ monitpath }}/{{ prefix }}cosmos"
+      content: |
+        check host {{ prefix }}Validator with address 127.0.0.1
+            start program = "/usr/bin/systemctl start {{ prefix }}cosmovisor"
+                as uid root and gid root
+            stop program = "/usr/bin/systemctl stop {{ prefix }}cosmovisor"
+            if failed port {{ serviceport }} type tcp then restart
+            if failed port {{ serviceport }} type tcp then exec "/root/go/bin/noti-{{ prefix }}port.sh"
+              repeat every 1 cycles
 
-  notify:
-    - Restart monit
+    notify:
+      - Restart monit
 
-  when: systemdfile != false and createcommands == True and monit == True and validator == True
+    when: systemdfile != false and createcommands == True and monit == True and validator == True

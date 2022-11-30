@@ -1,50 +1,51 @@
-- name: Install helpful packages
-  package: name={{ item }} state=present
-  with_items:
-    - monit
-  ignore_errors: true
-  when: monit == True
+---
+  - name: Install helpful packages
+    package: name={{ item }} state=present
+    with_items:
+      - monit
+    ignore_errors: true
+    when: monit == True
 
-- name: Create monit mailing configuration
-  copy:
-    dest: "{{ monitpath }}/mailing"
-    content: |
-      set eventqueue
-            basedir /var/monit
-            slots 5000
+  - name: Create monit mailing configuration
+    copy:
+      dest: "{{ monitpath }}/mailing"
+      content: |
+        set eventqueue
+              basedir /var/monit
+              slots 5000
 
-      set alert {{ notifications }}
-      set mailserver 127.0.0.1
+        set alert {{ notifications }}
+        set mailserver 127.0.0.1
 
-      set httpd port 2812 and
-        use address localhost  # only accept connection from localhost
-        allow localhost        # allow localhost to connect to the server and
-  register: monitservice
-  when: monit == True
+        set httpd port 2812 and
+          use address localhost # only accept connection from localhost
+          allow localhost # allow localhost to connect to the server and
+    register: monitservice
+    when: monit == True
 
-- name: Create noti-disk.sh with variables
-  copy:
-    dest: "/root/go/bin/noti-disk.sh"
-    mode: 0755
-    content: |
-      #!/usr/bin/env bash
-      export NOTI_TELEGRAM_TOKEN={{ telegramtoken }}
-      export NOTI_TELEGRAM_CHATID={{ telegramchatid }}
-      echo "Disk usage over {{ diskusagewarning }} at `hostname`" | /root/go/bin/noti -g -m -
-  when: monit == True
+  - name: Create noti-disk.sh with variables
+    copy:
+      dest: "/root/go/bin/noti-disk.sh"
+      mode: 0755
+      content: |
+        #!/usr/bin/env bash
+        export NOTI_TELEGRAM_TOKEN={{ telegramtoken }}
+        export NOTI_TELEGRAM_CHATID={{ telegramchatid }}
+        echo "Disk usage over {{ diskusagewarning }} at {{ inventory_hostname_short }}" | /root/go/bin/noti -g -m -
+    when: monit == True
 
-- name: Create monit disk monitorization
-  copy:
-    dest: "{{ monitpath }}/disk"
-    content: |
-      check device root with path /
-        if SPACE usage > {{ diskusagewarning }} then alert
-        if SPACE usage > {{ diskusagewarning }} then exec   "/root/go/bin/noti-disk.sh"
-  register: monitdisk
-  when: monit == True
+  - name: Create monit disk monitorization
+    copy:
+      dest: "{{ monitpath }}/disk"
+      content: |
+        check device root with path /
+          if SPACE usage > {{ diskusagewarning }} then alert
+          if SPACE usage > {{ diskusagewarning }} then exec "/root/go/bin/noti-disk.sh"
+    register: monitdisk
+    when: monit == True
 
-- name: Restart monit if required
-  service:
-    name: monit
-    state: restarted
-  when: monit and (monitservice.changed or monitdisk.changed)
+  - name: Restart monit if required
+    service:
+      name: monit
+      state: restarted
+    when: monit and (monitservice.changed or monitdisk.changed)

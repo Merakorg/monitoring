@@ -1,64 +1,65 @@
-- name: Delete cosmos stake-rewards command
-  file:
-    dest: "/root/{{ prefix }}stake-rewards"
-    state: absent
-  when: createcommands != True and validator != True
+---
+  - name: Delete cosmos stake-rewards command
+    file:
+      dest: "/root/{{ prefix }}stake-rewards"
+      state: absent
+    when: createcommands != True and validator != True
 
-- name: Create cosmos stake-rewards command
-  copy:
-    mode: 0700
-    dest: "/root/{{ prefix }}stake-rewards"
-    content: |
-      #!/usr/bin/env bash
-      # Load environment if existing
-      [ -f /root/.cosmos.env ] && source /root/.cosmos.env
+  - name: Create cosmos stake-rewards command
+    copy:
+      mode: 0700
+      dest: "/root/{{ prefix }}stake-rewards"
+      content: |
+        #!/usr/bin/env bash
+        # Load environment if existing
+        [ -f /root/.cosmos.env ] && source /root/.cosmos.env
 
-      SAFETY={{ safety }}
-      MINCLAIM={{ minclaim }}
-      MULTIPLIER={{ multiplier }}
+        SAFETY={{ safety }}
+        MINCLAIM={{ minclaim }}
+        MULTIPLIER={{ multiplier }}
 
-      OPERADDRESS="{{ ansible_local['nodevaladdress']['nodevaladdress'] }}"
-      NODEWALLET="{{ ansible_local['nodeaddress']['nodeaddress'] }}"
-      BACKEND='{{ backend }}'
-      FROM='{{ from }}'
-      TOTALWALLETS=1
-      PASSPHRASE="{{passphrase}}"
-      EXTRABIN='{{ extrabin }}'
-      CHAINID='{{ chainid }}'
-      CHAINCOMMAND="{{ chaincommand }}"
-      TOKEN='{{ token }}'
-      MINFEE='{{ minfee }}'
+        OPERADDRESS="{{ valaddress }}"
+        NODEWALLET="{{ address }}"
+        BACKEND='{{ backend }}'
+        FROM='{{ from }}'
+        TOTALWALLETS=1
+        PASSPHRASE="{{passphrase}}"
+        EXTRABIN='{{ extrabin }}'
+        CHAINID='{{ chainid }}'
+        CHAINCOMMAND="{% if cosmovisor != False %}{{ cosmospath }}/cosmovisor/current/bin/{{chaincommand}}{% else %}/root/go/bin/{{chaincommand}}{% endif %}"
+        TOKEN='{{ token }}'
+        MINFEE='{{ minfee }}'
 
-      # Temporary file cleanup
-      FILE=$(mktemp)
-      trap "rm ${FILE}" EXIT
+        # Temporary file cleanup
+        FILE=$(mktemp)
+        trap "rm ${FILE}" EXIT
 
 
-      if [ "x${1}" != "x" ]; then
-        NEWBALANCE=${1}
-      else
-        echo "No amount specified"
-        exit 1
-      fi
+        if [ "x${1}" != "x" ]; then
+          NEWBALANCE=${1}
+        else
+          echo "No amount specified"
+          exit 1
+        fi
 
-      # Stake
-      {% if passphrase != False %} echo ${PASSPHRASE} | {% endif %} ${CHAINCOMMAND} tx staking delegate -y ${OPERADDRESS} ${NEWBALANCE}${TOKEN} --from ${FROM} {% if backend != False %}--keyring-backend ${BACKEND}{% endif %} ${EXTRABIN} {% if chainid != False %}--chain-id ${CHAINID}{% endif %} {% if minfee != False %} --fees={{ minfee }}{{ token }}{% endif %}{% if minfee == False or dualtax  == True %} {{ gas }} {% endif %} {% if node != False %}--node {{ node }}{% endif %} {{ extratxbin }}  &> ${FILE}
-      cat ${FILE}
-      echo "Waiting 7 seconds after operation"
-      sleep 7
+        # Stake
+        {% if passphrase != False %} echo ${PASSPHRASE} | {% endif %} ${CHAINCOMMAND} tx staking delegate -y ${OPERADDRESS} ${NEWBALANCE}${TOKEN} --from ${FROM} {% if backend != False %}--keyring-backend ${BACKEND}{% endif %} ${EXTRABIN} {% if chainid != False %}--chain-id ${CHAINID}{% endif %} {% if minfee != False %} --fees={{ minfee }}{{ token }}{% endif %}{% if minfee == False or dualtax == True %} {{ gas }} {% endif %} {% if node != False %}--node {{ node }}{% endif %} {{ extratxbin }}  &> ${FILE}
+        cat ${FILE}
+        echo "Waiting 7 seconds after operation"
+        sleep 7
 
-      # raw_log: 'account sequence mismatch, expected 25665, got 25664: incorrect account
-      # Update SEQ to match obtained
+        # raw_log: 'account sequence mismatch, expected 25665, got 25664: incorrect account
+        # Update SEQ to match obtained
 
-      SEQ=$(grep -c mismatch  ${FILE})
+        SEQ=$(grep -c mismatch ${FILE})
 
-      if [ ${SEQ} -ne 0 ]; then
-          GOODSEQ=$(grep mismatch  ${FILE} | cut -d, -f2| cut -d' ' -f3)
-          echo "Repeating operation as sequence failed"
-          {% if passphrase != False %} echo ${PASSPHRASE} | {% endif %} ${CHAINCOMMAND} tx staking delegate -y ${OPERADDRESS} ${NEWBALANCE}${TOKEN} --from ${FROM} {% if backend != False %}--keyring-backend ${BACKEND}{% endif %} ${EXTRABIN} {% if chainid != False %}--chain-id ${CHAINID}{% endif %} {% if minfee != False %} --fees={{ minfee }}{{ token }}{% endif %}{% if minfee == False or dualtax  == True %} {{ gas }} {% endif %} {% if node != False %}--node {{ node }}{% endif %} {{ extratxbin }}  --sequence ${GOODSEQ} &>  ${FILE}
-          cat ${FILE}
-          echo "Waiting 7 seconds after operation"
-          sleep 7
-      fi
+        if [ ${SEQ} -ne 0 ]; then
+            GOODSEQ=$(grep mismatch ${FILE} | cut -d, -f2| cut -d' ' -f3)
+            echo "Repeating operation as sequence failed"
+            {% if passphrase != False %} echo ${PASSPHRASE} | {% endif %} ${CHAINCOMMAND} tx staking delegate -y ${OPERADDRESS} ${NEWBALANCE}${TOKEN} --from ${FROM} {% if backend != False %}--keyring-backend ${BACKEND}{% endif %} ${EXTRABIN} {% if chainid != False %}--chain-id ${CHAINID}{% endif %} {% if minfee != False %} --fees={{ minfee }}{{ token }}{% endif %}{% if minfee == False or dualtax == True %} {{ gas }} {% endif %} {% if node != False %}--node {{ node }}{% endif %} {{ extratxbin }}  --sequence ${GOODSEQ} &>  ${FILE}
+            cat ${FILE}
+            echo "Waiting 7 seconds after operation"
+            sleep 7
+        fi
 
-  when: createcommands == True and validator == True
+    when: createcommands == True and validator == True

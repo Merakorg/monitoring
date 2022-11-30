@@ -1,7 +1,8 @@
-- name: Configure Moniker
-  ini_file:
-    path: "{{cosmospath}}/config/config.toml"
-    section: null
-    option: moniker
-    value: "'{{ moniker }}'"
-  when: cosmospath !=  False
+---
+  - name: Configure Moniker
+    ini_file:
+      path: "{{cosmospath}}/config/config.toml"
+      section:
+      option: moniker
+      value: "'{{ moniker }}'"
+    when: cosmospath !=  False

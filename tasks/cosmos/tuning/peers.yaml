@@ -1,7 +1,8 @@
-- name: Configure Persistent Peers
-  ini_file:
-    path: "{{cosmospath}}/config/config.toml"
-    section: p2p
-    option: persistent_peers
-    value: "'{{ persistent_peers }}'"
-  when: cosmospath !=  False and persistent_peers != False
+---
+  - name: Configure Persistent Peers
+    ini_file:
+      path: "{{cosmospath}}/config/config.toml"
+      section: p2p
+      option: persistent_peers
+      value: "'{{ persistent_peers }}'"
+    when: cosmospath !=  False and persistent_peers != False

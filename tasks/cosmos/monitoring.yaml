@@ -1,4 +1,4 @@
-- name: Include task for monitoring
-  include_tasks: "{{item}}"
-  with_fileglob:
-    - "monitoring/*.yaml"
+---
+  - name: Include task for monitoring
+    include_tasks: "{{item}}"
+    loop: "{{ query('fileglob', 'monitoring/*.yaml') | sort }}"

@@ -1,4 +1,4 @@
-- name: Include task for individual commands
-  include_tasks: "{{item}}"
-  with_fileglob:
-    - "individual/*.yaml"
+---
+  - name: Include task for individual commands
+    include_tasks: "{{item}}"
+    loop: "{{ query('fileglob', 'individual/*.yaml') | sort }}"

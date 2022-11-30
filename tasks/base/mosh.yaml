@@ -1,19 +1,20 @@
-- name: Install helpful packages
-  package: name={{ item }} state=present
-  with_items:
-    - mosh
-    - firewalld
-  ignore_errors: true
+---
+  - name: Install helpful packages
+    package: name={{ item }} state=present
+    with_items:
+      - mosh
+      - firewalld
+    ignore_errors: true
 
-- name: Enable helpful services
-  service: name={{ item }} enabled=yes state=started
-  with_items:
-    - firewalld
-  ignore_errors: true
+  - name: Enable helpful services
+    service: name={{ item }} enabled=yes state=started
+    with_items:
+      - firewalld
+    ignore_errors: true
 
-- name: MOSH firewall rule
-  firewalld:
-    port: 60000-61000/udp
-    permanent: true
-    state: enabled
-    immediate: yes
+  - name: MOSH firewall rule
+    firewalld:
+      port: 60000-61000/udp
+      permanent: true
+      state: enabled
+      immediate: yes

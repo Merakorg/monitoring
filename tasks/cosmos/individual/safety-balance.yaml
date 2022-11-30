@@ -1,30 +1,31 @@
-- name: Delete cosmos balance over safety command
-  file:
-    dest: "/root/go/bin/{{ prefix }}safe-balance"
-    state: absent
-  when: createcommands != True
+---
+  - name: Delete cosmos balance over safety command
+    file:
+      dest: "/root/go/bin/{{ prefix }}safe-balance"
+      state: absent
+    when: createcommands != True
 
-- name: Create balance-over-safety
-  copy:
-    mode: 0700
-    dest: "/root/go/bin/{{ prefix }}safe-balance"
-    content: |
-      #!/usr/bin/env bash
-      . /root/.{{ prefix }}cosmos.env.sh
+  - name: Create balance-over-safety
+    copy:
+      mode: 0700
+      dest: "/root/go/bin/{{ prefix }}safe-balance"
+      content: |
+        #!/usr/bin/env bash
+        . /root/.{{ prefix }}cosmos.env.sh
 
-      TOKEN='{{ token }}'
+        TOKEN='{{ token }}'
 
-      BALANCE=$(/root/go/bin/{{ prefix }}get-balance)
+        BALANCE=$(/root/go/bin/{{ prefix }}get-balance)
 
 
-      MULTIPLIER={{ multiplier }}
+        MULTIPLIER={{ multiplier }}
 
-      # Use BC for reducing the value in case we've a multiplier to let comparison succeed
-      LOWERED=$(echo "$BALANCE/$MULTIPLIER"|bc)
+        # Use BC for reducing the value in case we've a multiplier to let comparison succeed
+        LOWERED=$(echo "$BALANCE/$MULTIPLIER"|bc)
 
-      if [ ${LOWERED} -ge {{ safety }} ]; then
-        exit 0
-      else
-        exit 1
-      fi
-  when: createcommands == True
+        if [ ${LOWERED} -ge {{ safety }} ]; then
+          exit 0
+        else
+          exit 1
+        fi
+    when: createcommands == True

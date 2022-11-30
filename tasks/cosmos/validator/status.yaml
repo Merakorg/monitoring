@@ -1,35 +1,39 @@
-- name: Delete cosmos status command
-  file:
-    dest: "/root/{{ prefix }}query-node-status"
-    state: absent
-  when: createcommands != True and validator != True
+---
+  - name: Delete cosmos status command
+    file:
+      dest: "/root/{{ prefix }}query-node-status"
+      state: absent
+    when: createcommands != True and validator != True
 
-- name: Create cosmos status command
-  copy:
-    mode: 0700
-    dest: "/root/{{ prefix }}query-node-status"
-    content: |
-      #!/usr/bin/env bash
-      . /root/.{{ prefix }}cosmos.env.sh
-      export HOME={{ ansible_user_dir }}
-      OUTPUT=$({{ chaincommand }} query staking validators --limit 2000 -o json {{ extrabin }} {% if node != False %}--node {{ node }}{% endif %} | jq -r '.validators[] | [.operator_address, .status, (.tokens|tonumber / pow(10; 6)), .commission.update_time[0:19], .description.moniker] | @csv' | column -t -s','|sort -k 3 -V -r|grep {{ ansible_local['nodevaladdress']['nodevaladdress'] }})
-      echo ${OUTPUT}
-      [ "$(echo ${OUTPUT} |awk '{ print $2}'|xargs echo)" == "BOND_STATUS_BONDED" ] && exit 0
-      if [ "$(echo ${OUTPUT} |awk '{ print $2}'|xargs echo)" == "BOND_STATUS_UNBONDED" ] || [ "$(echo ${OUTPUT} |awk '{ print $2}'|xargs echo)" == "BOND_STATUS_UNBONDING" ]; then
-        MAXVALIDATORS=$({{ chaincommand }} q tendermint-validator-set {% if node != False %}--node {{ node }}{% endif %} |tr ",{}" "\n"|grep total|cut -d ":" -f 2-|xargs echo)
-        MYPRIO=$(/root/{{ prefix }}query-validator-prio|awk '{print $1}')
-        if [ ${MYPRIO} -le ${MAXVALIDATORS} ]; then
-          {% if passphrase != False %}
-          # Run unjail if we know the passphrase
-          /root/{{ prefix }}unjail-node
-          echo "Unjail command executed"
-          {% endif %}
+  - name: Create cosmos status command
+    copy:
+      mode: 0700
+      dest: "/root/{{ prefix }}query-node-status"
+      content: |
+        #!/usr/bin/env bash
+        . /root/.{{ prefix }}cosmos.env.sh
+        export HOME={{ ansible_user_dir }}
+
+        CHAINCOMMAND="{% if cosmovisor != False %}{{ cosmospath }}/cosmovisor/current/bin/{{chaincommand}}{% else %}/root/go/bin/{{chaincommand}}{% endif %}"
+
+        OUTPUT=$(${CHAINCOMMAND} query staking validators --limit 2000 -o json {{ extrabin }} {% if node != False %}--node {{ node }}{% endif %} | jq -r '.validators[] | [.operator_address, .status, (.tokens|tonumber / pow(10; 6)), .commission.update_time[0:19], .description.moniker] | @csv' | column -t -s','|sort -k 3 -V -r|grep {{ valaddress }})
+        echo ${OUTPUT}
+        [ "$(echo ${OUTPUT} |awk '{ print $2}'|xargs echo)" == "BOND_STATUS_BONDED" ] && exit 0
+        if [ "$(echo ${OUTPUT} |awk '{ print $2}'|xargs echo)" == "BOND_STATUS_UNBONDED" ] || [ "$(echo ${OUTPUT} |awk '{ print $2}'|xargs echo)" == "BOND_STATUS_UNBONDING" ]; then
+          MAXVALIDATORS=$(${CHAINCOMMAND} q tendermint-validator-set {% if node != False %}--node {{ node }}{% endif %} |tr ",{}" "\n"|grep total|cut -d ":" -f 2-|xargs echo)
+          MYPRIO=$(/root/{{ prefix }}query-validator-prio|awk '{print $1}')
+          if [ ${MYPRIO} -le ${MAXVALIDATORS} ]; then
+            {% if passphrase != False %}
+            # Run unjail if we know the passphrase
+            /root/{{ prefix }}unjail-node
+            echo "Unjail command executed"
+            {% endif %}
+            exit 1
+          else
+            # Our validator is outside of the active set, do not check bonding
+            exit 0
+          fi
           exit 1
-        else
-          # Our validator is outside of the active set, do not check bonding
-          exit 0
         fi
-        exit 1
-      fi
-      exit 0
-  when: createcommands == True and validator == True
+        exit 0
+    when: createcommands == True and validator == True

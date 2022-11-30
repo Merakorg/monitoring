@@ -1,79 +1,92 @@
-- name: Delete cosmos banksend command
-  file:
-    dest: "/root/go/bin/{{ prefix }}banksend"
-    state: absent
-  when: createcommands != True
+---
+  - name: Delete cosmos banksend command
+    file:
+      dest: "/root/go/bin/{{ prefix }}banksend"
+      state: absent
+    when: createcommands != True
 
-- name: Create banksend
-  copy:
-    mode: 0700
-    dest: "/root/go/bin/{{ prefix }}banksend"
-    content: |
-      #!/usr/bin/env bash
+  - name: Create banksend
+    copy:
+      mode: 0700
+      dest: "/root/go/bin/{{ prefix }}banksend"
+      content: |
+        #!/usr/bin/env bash
 
-      wallet=${1}
-      AMOUNT=${2}
+        wallet=${1}
+        AMOUNT=${2}
 
-      # Load environment if existing
-      [ -f /root/.cosmos.env ] && source /root/.cosmos.env
+        # Load environment if existing
+        [ -f /root/.cosmos.env ] && source /root/.cosmos.env
 
-      SAFETY={{ safety }}
-      MINCLAIM={{ minclaim }}
-      MULTIPLIER={{ multiplier }}
+        SAFETY={{ safety }}
+        MINCLAIM={{ minclaim }}
+        MULTIPLIER={{ multiplier }}
 
-      OPERADDRESS="{{ ansible_local['nodevaladdress']['nodevaladdress'] }}"
-      NODEWALLET="{{ ansible_local['nodeaddress']['nodeaddress'] }}"
-      TARGETWALLETS="$(echo {{ wallets | join(' ') }})"
-      TOTALWALLETS="$(echo $TARGETWALLETS|tr " " "\n"|wc -l)"
-      BACKEND='{{ backend }}'
-      FROM='{{ from }}'
-      PASSPHRASE="{{passphrase}}"
-      EXTRABIN='{{ extrabin }}'
-      CHAINID='{{ chainid }}'
-      CHAINCOMMAND="{{ chaincommand }}"
-      TOKEN='{{ token }}'
-      MINFEE='{{ minfee }}'
-
-
-      BALANCE=$(/root/go/bin/{{ prefix }}get-balance)
+        OPERADDRESS="{{ valaddress }}"
+        NODEWALLET="{{ address }}"
+        TARGETWALLETS="$(echo {{ wallets | join(' ') }})"
+        TOTALWALLETS="$(echo $TARGETWALLETS|tr " " "\n"|wc -l)"
+        BACKEND='{{ backend }}'
+        FROM='{{ from }}'
+        PASSPHRASE="{{passphrase}}"
+        EXTRABIN='{{ extrabin }}'
+        CHAINID='{{ chainid }}'
+        CHAINCOMMAND="{% if cosmovisor != False %}{{ cosmospath }}/cosmovisor/current/bin/{{chaincommand}}{% else %}/root/go/bin/{{chaincommand}}{% endif %}"
+        TOKEN='{{ token }}'
+        MINFEE='{{ minfee }}'
 
 
-      # Temporary file cleanup
-      FILE=$(mktemp)
-      trap "rm ${FILE}" EXIT
-
-      # Use BC for reducing the value in case we've a multiplier to let comparison succeed
-      LOWEREDBALANCE=$(echo "$BALANCE/$MULTIPLIER"|bc)
-      LOWEREDAMOUNT=$(echo "$AMOUNT/$MULTIPLIER"|bc)
-
-      if [ ${LOWEREDAMOUNT} -gt ${LOWEREDBALANCE} ]; then
-        echo "Requested amount ${AMOUNT} is higher than current balance ${BALANCE}"
-        exit 1
-      fi
-
-      # Do the transfer
-
-      echo "About to send ${AMOUNT} to ${wallet}"
-      {% if passphrase != False %}echo ${PASSPHRASE} | {% endif %} ${CHAINCOMMAND} tx bank send -y ${FROM} ${wallet} ${AMOUNT}{{token}} {% if backend != False %}--keyring-backend ${BACKEND}{% endif %} ${EXTRABIN} {% if chainid != False %}--chain-id ${CHAINID}{% endif %} {% if minfee != False %} --fees={{ minfee }}{{ token }}{% endif %}{% if minfee == False or dualtax  == True %} {{ gas }} {% endif %} {% if node != False %}--node {{ node }}{% endif %} {{ extratxbin }}  &> ${FILE}
-      cat ${FILE}
-      echo "Waiting 7 seconds after operation"
-      sleep 7
-
-      # raw_log: 'account sequence mismatch, expected 25665, got 25664: incorrect account
-      # Update SEQ to match obtained
-
-      SEQ=$(grep -c mismatch  ${FILE})
-
-      if [ ${SEQ} -ne 0 ]; then
-          # Fallback in case jq doesn't work fine
-          GOODSEQ=$(cat ${FILE}|jq '.raw_log'|grep mismatch | cut -d, -f2| cut -d' ' -f3) || GOODSEQ=$(grep mismatch  ${FILE} | cut -d, -f2| cut -d' ' -f3)
-
-          echo "Repeating operation as sequence failed"
-          {% if passphrase != False %}echo ${PASSPHRASE} | {% endif %} ${CHAINCOMMAND} tx bank send -y ${FROM} ${wallet} ${AMOUNT}{{token}} {% if backend != False %}--keyring-backend ${BACKEND}{% endif %} ${EXTRABIN} {% if chainid != False %}--chain-id ${CHAINID}{% endif %} {% if minfee != False %} --fees={{ minfee }}{{ token }}{% endif %}{% if minfee == False or dualtax  == True %} {{ gas }} {% endif %} {% if node != False %}--node {{ node }}{% endif %} {{ extratxbin }}  --sequence ${GOODSEQ} &>  ${FILE}
-          cat ${FILE}
-          echo "Waiting 7 seconds after operation"
-          sleep 7
-      fi
+        BALANCE=$(/root/go/bin/{{ prefix }}get-balance)
 
 
-  when: createcommands == True
+        # Temporary file cleanup
+        FILE=$(mktemp)
+        trap "rm ${FILE}" EXIT
+
+        # Use BC for reducing the value in case we've a multiplier to let comparison succeed
+        LOWEREDBALANCE=$(echo "$BALANCE/$MULTIPLIER"|bc)
+        LOWEREDAMOUNT=$(echo "$AMOUNT/$MULTIPLIER"|bc)
+
+        if [ ${LOWEREDAMOUNT} -gt ${LOWEREDBALANCE} ]; then
+          echo "Requested amount ${AMOUNT} is higher than current balance ${BALANCE}"
+          exit 1
+        fi
+
+        # Do the transfer
+
+        echo "About to send ${AMOUNT} to ${wallet}"
+        {% if passphrase != False %}echo ${PASSPHRASE} | {% endif %} ${CHAINCOMMAND} tx bank send -y ${FROM} ${wallet} ${AMOUNT}{{token}} {% if backend != False %}--keyring-backend ${BACKEND}{% endif %} ${EXTRABIN} {% if chainid != False %}--chain-id ${CHAINID}{% endif %} {% if minfee != False %} --fees={{ minfee }}{{ token }}{% endif %}{% if minfee == False or dualtax == True %} {{ gas }} {% endif %} {% if node != False %}--node {{ node }}{% endif %} {{ extratxbin }}  &> ${FILE}
+        cat ${FILE}
+        echo "Waiting 7 seconds after operation"
+        sleep 7
+
+        # raw_log: 'account sequence mismatch, expected 25665, got 25664: incorrect account
+        # Update SEQ to match obtained
+
+        SEQ=$(grep -c mismatch ${FILE})
+
+        if [ ${SEQ} -ne 0 ]; then
+            # Fallback in case jq doesn't work fine
+            FAIL=-1
+            cat ${FILE}|jq '.raw_log' >/dev/null 2>&1 && FAIL=0 || FAIL=1
+
+            if [ "${FAIL}" == "0" ]; then
+              GOODSEQ=$(cat ${FILE}|jq '.raw_log'|grep mismatch | cut -d, -f2| cut -d' ' -f3)
+            elif [ "${FAIL}" == "1" ]; then
+              GOODSEQ=$(grep mismatch ${FILE} | cut -d, -f2| cut -d' ' -f3)
+            else
+              echo "FAILURE in grabbing SEQNO"
+              GOODSEQ=0
+            fi
+
+            if [ "${GOODSEQ}" != "0" ]; then
+              echo "Repeating operation as sequence failed"
+              {% if passphrase != False %}echo ${PASSPHRASE} | {% endif %} ${CHAINCOMMAND} tx bank send -y ${FROM} ${wallet} ${AMOUNT}{{token}} {% if backend != False %}--keyring-backend ${BACKEND}{% endif %} ${EXTRABIN} {% if chainid != False %}--chain-id ${CHAINID}{% endif %} {% if minfee != False %} --fees={{ minfee }}{{ token }}{% endif %}{% if minfee == False or dualtax == True %} {{ gas }} {% endif %} {% if node != False %}--node {{ node }}{% endif %} {{ extratxbin }}  --sequence ${GOODSEQ} &>  ${FILE}
+              cat ${FILE}
+              echo "Waiting 7 seconds after operation"
+              sleep 7
+            fi
+        fi
+
+
+    when: createcommands == True

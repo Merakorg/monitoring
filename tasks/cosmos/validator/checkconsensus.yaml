@@ -1,13 +1,14 @@
-- name: Delete check consensus
-  file:
-    dest: "/root/{{ prefix }}check-consensus"
-    state: absent
-  when: createcommands != True and validator != True
+---
+  - name: Delete check consensus
+    file:
+      dest: "/root/{{ prefix }}check-consensus"
+      state: absent
+    when: createcommands != True and validator != True
 
-- name: Create check consensus
-  copy:
-    mode: 0700
-    dest: "/root/{{ prefix }}check-consensus"
-    content: |
-      curl -s {% if node != False %}{{ node }}{% else %}http://localhost:{{rpcport}}{% endif %}/consensus_state | jq '.result.round_state.height_vote_set[0].prevotes_bit_array'
-  when: createcommands == True and validator == True
+  - name: Create check consensus
+    copy:
+      mode: 0700
+      dest: "/root/{{ prefix }}check-consensus"
+      content: |
+        curl -s {% if node != False %}{{ node }}{% else %}http://localhost:{{rpcport}}{% endif %}/consensus_state | jq '.result.round_state.height_vote_set[0].prevotes_bit_array'
+    when: createcommands == True and validator == True

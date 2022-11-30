@@ -1,33 +1,34 @@
-- name: Create noti-service.sh with variables
-  copy:
-    dest: "/root/go/bin/noti-{{ prefix }}service.sh"
-    mode: 0755
-    content: |
-      #!/usr/bin/env bash
-      export NOTI_TELEGRAM_TOKEN={{ telegramtoken }}
-      export NOTI_TELEGRAM_CHATID={{ telegramchatid }}
-      echo "🖥️ Cosmos PROCESS {{ chaincommand }} failed at `hostname`" | /root/go/bin/noti -g -m -
-  when: createcommands == True and monit == True
+---
+  - name: Create noti-service.sh with variables
+    copy:
+      dest: "/root/go/bin/noti-{{ prefix }}service.sh"
+      mode: 0755
+      content: |
+        #!/usr/bin/env bash
+        export NOTI_TELEGRAM_TOKEN={{ telegramtoken }}
+        export NOTI_TELEGRAM_CHATID={{ telegramchatid }}
+        echo "🖥️ Cosmos PROCESS /root/go/bin/{{chaincommand}} failed at {{ inventory_hostname_short }}" | /root/go/bin/noti -g -m -
+    when: createcommands == True and monit == True
 
-- name: Remove monit cosmos service monitoring
-  file:
-    dest: "{{ monitpath }}/{{ prefix }}cosmovisor"
-    state: absent
-  notify:
-    - Restart monit
-  when: createcommands != True or monit != True or systemdfile != True
+  - name: Remove monit cosmos service monitoring
+    file:
+      dest: "{{ monitpath }}/{{ prefix }}cosmovisor"
+      state: absent
+    notify:
+      - Restart monit
+    when: createcommands != True or monit != True or systemdfile != True
 
-- name: Create monit cosmos service guard
-  copy:
-    dest: "{{ monitpath }}/{{ prefix }}cosmovisor"
-    content: |
-      check process {{ prefix }}cosmovisor matching {% if cosmovisor == True %}'/root/go/bin/cosmovisor'{% else %}'{{ chaincommand }}'{% endif %}
-          start program = "/usr/bin/systemctl start {{ prefix }}cosmovisor"
-              as uid root and gid root with timeout 1200 seconds
-          stop program = "/usr/bin/systemctl stop {{ prefix }}cosmovisor"
-          if not exist then restart
-          if not exist then exec  "/root/go/bin/noti-{{ prefix }}service.sh"
-            repeat every 1 cycles
-  when: systemdfile == true and createcommands == True and monit == True
-  notify:
-    - Restart monit
+  - name: Create monit cosmos service guard
+    copy:
+      dest: "{{ monitpath }}/{{ prefix }}cosmovisor"
+      content: |
+        check process {{ prefix }}cosmovisor matching {% if cosmovisor == True %}'/root/go/bin/cosmovisor'{% else %}'/root/go/bin/{{chaincommand}}'{% endif %}
+            start program = "/usr/bin/systemctl start {{ prefix }}cosmovisor"
+                as uid root and gid root with timeout 1200 seconds
+            stop program = "/usr/bin/systemctl stop {{ prefix }}cosmovisor"
+            if not exist then restart
+            if not exist then exec "/root/go/bin/noti-{{ prefix }}service.sh"
+              repeat every 1 cycles
+    when: systemdfile == true and createcommands == True and monit == True
+    notify:
+      - Restart monit
