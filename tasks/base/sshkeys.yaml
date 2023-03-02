@@ -15,7 +15,7 @@
 
   - name: get github key(s) and update the authorized_keys file
     authorized_key:
-      user: 'root'
+      user: "root"
       key: "https://github.com/{{ item }}.keys"
       state: present
       exclusive: no

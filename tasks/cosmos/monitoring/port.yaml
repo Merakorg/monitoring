@@ -29,9 +29,9 @@
       dest: "{{ monitpath }}/{{ prefix }}cosmos"
       content: |
         check host {{ prefix }}Validator with address 127.0.0.1
-            if failed port {{ serviceport }} type tcp then alert
             if failed port {{ serviceport }} type tcp then exec "/root/go/bin/noti-{{ prefix }}port.sh"
               repeat every 1 cycles
+              noalert {{ notifications }}
     notify:
       - Restart monit
 
@@ -46,8 +46,10 @@
                 as uid root and gid root
             stop program = "/usr/bin/systemctl stop {{ prefix }}cosmovisor"
             if failed port {{ serviceport }} type tcp then restart
+              noalert {{ notifications }}
             if failed port {{ serviceport }} type tcp then exec "/root/go/bin/noti-{{ prefix }}port.sh"
               repeat every 1 cycles
+              noalert {{ notifications }}
 
     notify:
       - Restart monit

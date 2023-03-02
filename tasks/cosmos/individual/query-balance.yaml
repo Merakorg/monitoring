@@ -13,6 +13,14 @@
         #!/usr/bin/env bash
         . /root/.{{ prefix }}cosmos.env.sh
 
+        if /root/go/bin/{{ prefix }}issynced; then
+          echo -n
+        else
+          echo "network is not synced"
+          exit 1
+        fi
+
+
         CHAINCOMMAND="{% if cosmovisor != False %}{{ cosmospath }}/cosmovisor/current/bin/{{chaincommand}}{% else %}/root/go/bin/{{chaincommand}}{% endif %}"
         if [ "x${1}" != "x" ]; then
           ADDRESS=${1}
@@ -20,10 +28,9 @@
           ADDRESS="{{ address }}"
         fi
 
-        ${CHAINCOMMAND} query bank balances ${ADDRESS} {{ extrabin }} {% if node != False %}--node {{ node }}{% endif %} ${@: 2}
+        ${CHAINCOMMAND} query bank balances ${ADDRESS} {{ extrabin }} {% if forcenode != False and node != False %}--node {{ node }}{% endif %} ${@: 2}
         exit $?
     when: createcommands == True
-
 
   - name: Delete cosmos balance get command
     file:

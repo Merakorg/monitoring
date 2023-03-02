@@ -13,6 +13,8 @@
         #!/usr/bin/env bash
         export NOTI_TELEGRAM_TOKEN={{ telegramtoken }}
         export NOTI_TELEGRAM_CHATID={{ telegramchatid }}
+        {% if telegramtopic %}{% if telegramtopic['bonding'] %}export NOTI_TELEGRAM_TOPIC={{ telegramtopic['bonding'] }}{% endif %}{% endif %}
+
         echo "🚨 Cosmos BONDING failed at {{ inventory_hostname_short }}" | /root/go/bin/noti -g -m -
     when: createcommands == True and monit == True and validator == True
 
@@ -30,9 +32,9 @@
       dest: "{{ monitpath }}/{{ prefix }}validator"
       content: |
         check program {{ prefix }}ValidatorStatus with path "/root/{{ prefix }}query-node-status"
-            if status > 0 then alert
             if status > 0 then exec "/root/go/bin/noti-{{ prefix }}bond.sh"
               repeat every 1 cycles
+              noalert {{ notifications }}
     when: createcommands == True and monit == True and validator == True
     notify:
       - Restart monit

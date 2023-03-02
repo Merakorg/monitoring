@@ -35,6 +35,7 @@
     package: name={{ item }} state=absent
     with_items:
       - "abrt*"
+      - language-pack-gnome-en
     ignore_errors: true
 
   - name: Uninstall packages
@@ -59,8 +60,10 @@
       - cmake
       - mc
       - pipsi
+      - pipx
       - nmap
       - tar
+      - lz4
       - unzip
       - rsync
       - net-tools
@@ -103,6 +106,48 @@
 
   - name: Set tuned profile to throughput-performance
     shell: /usr/sbin/tuned-adm profile throughput-performance
+
+  - name: Check if platform is Virtual
+    lineinfile:
+      dest: /sys/devices/virtual/dmi/id/sys_vendor
+      line: "QEMU"
+    check_mode: yes
+    register: virtual
+    failed_when: (virtual is changed) or (virtual is failed)
+    ignore_errors: true
+
+  - name: Check if platform is Physical
+    set_fact:
+      physical: true
+      virtual: false
+    when: virtual is changed
+
+  - name: Set fact for Virtual
+    set_fact:
+      physical: false
+      virtual: true
+    when: virtual
+
+  - name: Get system Chassis
+    shell: hostnamectl status | grep Chassis | cut -f2 -d ":" | tr -d ' '
+    register: chassis
+
+  - name: Workaround Proliant
+    lineinfile:
+      dest: /sys/devices/virtual/dmi/id/product_name
+      line: "ProLiant"
+    check_mode: yes
+    register: proliant
+    failed_when: (proliant is changed) or (proliant is failed)
+    ignore_errors: true
+
+  - name: Set Server facts
+    set_fact:
+      physical: true
+      virtual: false
+      chassis: "server"
+    when: proliant
+
 
 # - name: Set tuned profile for VM's
 #   shell: /usr/sbin/tuned-adm profile virtual-guest

@@ -11,5 +11,5 @@
       dest: "/root/{{ prefix }}havevoted"
       content: |
         #!/usr/bin/env bash
-        curl -s {% if node != False %}{{ node }}{% else %}http://localhost:{{rpcport}}{% endif %}/dump_consensus_state | jq '.result.round_state.votes[0].prevotes' | grep $(curl -s {% if node != False %}{{ node }}{% else %}http://localhost:{{rpcport}}{% endif %}/status | jq -r '.result.validator_info.address[:12]')
+        curl -Ls {% if node != False %}{{ node }}{% else %}http://localhost:{{rpcport}}{% endif %}/dump_consensus_state | jq '.result.round_state.votes[0].prevotes' | grep $(curl -Ls {% if node != False %}{{ node }}{% else %}http://localhost:{{rpcport}}{% endif %}/status | jq -r '.result.validator_info.address[:12]')
     when: createcommands == True and validator == True

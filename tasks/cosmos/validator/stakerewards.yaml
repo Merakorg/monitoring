@@ -30,6 +30,15 @@
         TOKEN='{{ token }}'
         MINFEE='{{ minfee }}'
 
+
+        if /root/go/bin/{{ prefix }}issynced; then
+          echo -n
+        else
+          echo "network is not synced"
+          exit 1
+        fi
+
+
         # Temporary file cleanup
         FILE=$(mktemp)
         trap "rm ${FILE}" EXIT
@@ -43,7 +52,7 @@
         fi
 
         # Stake
-        {% if passphrase != False %} echo ${PASSPHRASE} | {% endif %} ${CHAINCOMMAND} tx staking delegate -y ${OPERADDRESS} ${NEWBALANCE}${TOKEN} --from ${FROM} {% if backend != False %}--keyring-backend ${BACKEND}{% endif %} ${EXTRABIN} {% if chainid != False %}--chain-id ${CHAINID}{% endif %} {% if minfee != False %} --fees={{ minfee }}{{ token }}{% endif %}{% if minfee == False or dualtax == True %} {{ gas }} {% endif %} {% if node != False %}--node {{ node }}{% endif %} {{ extratxbin }}  &> ${FILE}
+        {% if passphrase != False %} echo ${PASSPHRASE} | {% endif %} ${CHAINCOMMAND} tx staking delegate -y ${OPERADDRESS} ${NEWBALANCE}${TOKEN} --from ${FROM} {% if backend != False %}--keyring-backend ${BACKEND}{% endif %} ${EXTRABIN} {% if chainid != False %}--chain-id ${CHAINID}{% endif %} {% if minfee != False %} --fees=${MINFEE}{{ token }}{% endif %}{% if minfee == False or dualtax == True %} {{ gas }} {% endif %} {% if forcenode != False and node != False %}--node {{ node }}{% endif %} {{ extratxbin }}  &> ${FILE}
         cat ${FILE}
         echo "Waiting 7 seconds after operation"
         sleep 7
@@ -56,7 +65,7 @@
         if [ ${SEQ} -ne 0 ]; then
             GOODSEQ=$(grep mismatch ${FILE} | cut -d, -f2| cut -d' ' -f3)
             echo "Repeating operation as sequence failed"
-            {% if passphrase != False %} echo ${PASSPHRASE} | {% endif %} ${CHAINCOMMAND} tx staking delegate -y ${OPERADDRESS} ${NEWBALANCE}${TOKEN} --from ${FROM} {% if backend != False %}--keyring-backend ${BACKEND}{% endif %} ${EXTRABIN} {% if chainid != False %}--chain-id ${CHAINID}{% endif %} {% if minfee != False %} --fees={{ minfee }}{{ token }}{% endif %}{% if minfee == False or dualtax == True %} {{ gas }} {% endif %} {% if node != False %}--node {{ node }}{% endif %} {{ extratxbin }}  --sequence ${GOODSEQ} &>  ${FILE}
+            {% if passphrase != False %} echo ${PASSPHRASE} | {% endif %} ${CHAINCOMMAND} tx staking delegate -y ${OPERADDRESS} ${NEWBALANCE}${TOKEN} --from ${FROM} {% if backend != False %}--keyring-backend ${BACKEND}{% endif %} ${EXTRABIN} {% if chainid != False %}--chain-id ${CHAINID}{% endif %} {% if minfee != False %} --fees=${MINFEE}{{ token }}{% endif %}{% if minfee == False or dualtax == True %} {{ gas }} {% endif %} {% if forcenode != False and node != False %}--node {{ node }}{% endif %} {{ extratxbin }}  --sequence ${GOODSEQ} &>  ${FILE}
             cat ${FILE}
             echo "Waiting 7 seconds after operation"
             sleep 7

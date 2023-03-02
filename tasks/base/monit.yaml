@@ -39,8 +39,9 @@
       dest: "{{ monitpath }}/disk"
       content: |
         check device root with path /
-          if SPACE usage > {{ diskusagewarning }} then alert
           if SPACE usage > {{ diskusagewarning }} then exec "/root/go/bin/noti-disk.sh"
+            noalert {{ notifications }}
+
     register: monitdisk
     when: monit == True
 

@@ -19,8 +19,8 @@
       - {regexp: "^export NOTI_TELEGRAM_TOKEN.*", line: "export NOTI_TELEGRAM_TOKEN={{ telegramtoken }}"}
 
   - name: Download noti binary
-    shell: curl -L $(curl -s https://api.github.com/repos/variadico/noti/releases/latest | awk '/browser_download_url/ { print $2 }' | grep 'linux-amd64'
-      | sed 's/"//g') | tar -xz
+    shell: "curl -L $(curl -s https://api.github.com/repos/variadico/noti/releases/latest | awk '/browser_download_url/ { print $2 }' | grep 'linux-amd64'\
+      \ | sed 's/\"//g') | tar -xz"
     args:
       chdir: /root/go/bin
       creates: /root/go/bin/noti

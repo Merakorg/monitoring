@@ -3,7 +3,6 @@
     file: path={{ item }} state=absent
     loop: "{{ query('fileglob', '/boot/*rescue*') | sort }}"
 
-
   - name: Uninstall packages
     package: name={{ item }} state=absent
     with_items:

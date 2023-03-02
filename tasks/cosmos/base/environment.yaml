@@ -15,24 +15,26 @@
       content: ""
     when: envvar == []
 
-  - name: Configure COSMOS User environment add or append
+  - name: Configure COSMOS User environment /root/.{{ prefix }}cosmos.env
+    replace:
+      dest: /root/.{{ prefix }}cosmos.env
+      regexp: ".*{{ item.var }}.*"
+      replace: "{{ item.var }}='{{item.value}}'"
+    with_items:
+      - "{{ envvar }}"
+    when: envvar != []
+    register: cosmchange
+
+  - name: Configure COSMOS User environment add or append /root/.{{ prefix }}cosmos.env
     lineinfile:
       dest: /root/.{{ prefix }}cosmos.env
-      regexp: ".*{{ item }}.*"
-      line: "{{ item }}"
+      regexp: ".*{{ item.var }}.*"
+      line: "{{ item.var }}='{{item.value}}'"
       state: present
     with_items:
       - "{{ envvar }}"
     when: envvar != []
-
-  - name: Configure COSMOS User environment
-    replace:
-      dest: /root/.{{ prefix }}cosmos.env
-      regexp: ".*{{ item }}.*"
-      replace: "{{ item }}"
-    with_items:
-      - "{{ envvar }}"
-    when: envvar != []
+    register: cosmaddorappend
 
   - name: Create empty environment for BASH
     copy:
@@ -41,24 +43,33 @@
       content: ""
     when: envvar == []
 
-  - name: Configure COSMOS User environment for BASH add or append
+  - name: Configure COSMOS User environment for BASH /root/.{{ prefix }}cosmos.env.sh
+    replace:
+      dest: /root/.{{ prefix }}cosmos.env.sh
+      regexp: "^.*{{ item.var }}.*"
+      replace: "export {{ item.var }}='{{item.value}}'"
+    with_items:
+      - "{{ envvar }}"
+    when: envvar != []
+    register: bashchange
+
+  - name: Configure COSMOS User environment for BASH add or append /root/.{{ prefix }}cosmos.env.sh
     lineinfile:
       dest: /root/.{{ prefix }}cosmos.env.sh
-      regexp: "^.*{{ item }}.*"
-      line: "export {{ item }}"
+      regexp: "^.*{{ item.var }}.*"
+      line: "export {{ item.var }}='{{item.value}}'"
       state: present
     with_items:
       - "{{ envvar }}"
     when: envvar != []
+    register: bashaddorappend
 
-  - name: Configure COSMOS User environment for BASH
-    replace:
-      dest: /root/.{{ prefix }}cosmos.env.sh
-      regexp: "^.*{{ item }}.*"
-      replace: "export {{ item }}"
+  - name: Unify environment file
+    shell: "TEMP=$(mktemp); sort -u {{item}} > ${TEMP}; cat ${TEMP}|tee {{item}}"
     with_items:
-      - "{{ envvar }}"
-    when: envvar != []
+      - /root/.{{ prefix }}cosmos.env
+      - /root/.{{ prefix }}cosmos.env.sh
+    when: cosmchange.changed or cosmaddorappend.changed or bashchange or bashaddorappend
 
   - name: Configure User environment to load cosmos User Environment
     lineinfile:

@@ -18,6 +18,14 @@
         # Load environment if existing
         [ -f /root/.cosmos.env ] && source /root/.cosmos.env
 
+        if /root/go/bin/{{ prefix }}issynced; then
+          echo -n
+        else
+          echo "network is not synced"
+          exit 1
+        fi
+
+
         SAFETY={{ safety }}
         MINCLAIM={{ minclaim }}
         MULTIPLIER={{ multiplier }}
@@ -55,7 +63,7 @@
         # Do the transfer
 
         echo "About to send ${AMOUNT} to ${wallet}"
-        {% if passphrase != False %}echo ${PASSPHRASE} | {% endif %} ${CHAINCOMMAND} tx bank send -y ${FROM} ${wallet} ${AMOUNT}{{token}} {% if backend != False %}--keyring-backend ${BACKEND}{% endif %} ${EXTRABIN} {% if chainid != False %}--chain-id ${CHAINID}{% endif %} {% if minfee != False %} --fees={{ minfee }}{{ token }}{% endif %}{% if minfee == False or dualtax == True %} {{ gas }} {% endif %} {% if node != False %}--node {{ node }}{% endif %} {{ extratxbin }}  &> ${FILE}
+        {% if passphrase != False %}echo ${PASSPHRASE} | {% endif %} ${CHAINCOMMAND} tx bank send -y ${FROM} ${wallet} ${AMOUNT}{{token}} {% if backend != False %}--keyring-backend ${BACKEND}{% endif %} ${EXTRABIN} {% if chainid != False %}--chain-id ${CHAINID}{% endif %} {% if minfee != False %} --fees=${MINFEE}{{ token }}{% endif %}{% if minfee == False or dualtax == True %} {{ gas }} {% endif %} {% if forcenode != False and node != False %}--node {{ node }}{% endif %} {{ extratxbin }}  &> ${FILE}
         cat ${FILE}
         echo "Waiting 7 seconds after operation"
         sleep 7
@@ -81,12 +89,11 @@
 
             if [ "${GOODSEQ}" != "0" ]; then
               echo "Repeating operation as sequence failed"
-              {% if passphrase != False %}echo ${PASSPHRASE} | {% endif %} ${CHAINCOMMAND} tx bank send -y ${FROM} ${wallet} ${AMOUNT}{{token}} {% if backend != False %}--keyring-backend ${BACKEND}{% endif %} ${EXTRABIN} {% if chainid != False %}--chain-id ${CHAINID}{% endif %} {% if minfee != False %} --fees={{ minfee }}{{ token }}{% endif %}{% if minfee == False or dualtax == True %} {{ gas }} {% endif %} {% if node != False %}--node {{ node }}{% endif %} {{ extratxbin }}  --sequence ${GOODSEQ} &>  ${FILE}
+              {% if passphrase != False %}echo ${PASSPHRASE} | {% endif %} ${CHAINCOMMAND} tx bank send -y ${FROM} ${wallet} ${AMOUNT}{{token}} {% if backend != False %}--keyring-backend ${BACKEND}{% endif %} ${EXTRABIN} {% if chainid != False %}--chain-id ${CHAINID}{% endif %} {% if minfee != False %} --fees=${MINFEE}{{ token }}{% endif %}{% if minfee == False or dualtax == True %} {{ gas }} {% endif %} {% if forcenode != False and node != False %}--node {{ node }}{% endif %} {{ extratxbin }}  --sequence ${GOODSEQ} &>  ${FILE}
               cat ${FILE}
               echo "Waiting 7 seconds after operation"
               sleep 7
             fi
         fi
-
 
     when: createcommands == True

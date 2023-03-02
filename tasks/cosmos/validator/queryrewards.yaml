@@ -12,7 +12,15 @@
       content: |
         #!/usr/bin/env bash
         . /root/.{{ prefix }}cosmos.env.sh
+
+        if /root/go/bin/{{ prefix }}issynced; then
+          echo -n
+        else
+          echo "network is not synced"
+          exit 1
+        fi
+
         CHAINCOMMAND="{% if cosmovisor != False %}{{ cosmospath }}/cosmovisor/current/bin/{{chaincommand}}{% else %}/root/go/bin/{{chaincommand}}{% endif %}"
-        ${CHAINCOMMAND} query distribution rewards {{ address }} {{ extrabin }} {% if node != False %}--node {{ node }}{% endif %}  $*
-        ${CHAINCOMMAND} query distribution commission {{ valaddress }} {{ extrabin }} {% if node != False %}--node {{ node }}{% endif %}  $*
+        ${CHAINCOMMAND} query distribution rewards {{ address }} {{ extrabin }} {% if forcenode != False and node != False %}--node {{ node }}{% endif %}  $*
+        ${CHAINCOMMAND} query distribution commission {{ valaddress }} {{ extrabin }} {% if forcenode != False and node != False %}--node {{ node }}{% endif %}  $*
     when: createcommands == True and validator == True

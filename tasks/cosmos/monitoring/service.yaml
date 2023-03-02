@@ -27,8 +27,10 @@
                 as uid root and gid root with timeout 1200 seconds
             stop program = "/usr/bin/systemctl stop {{ prefix }}cosmovisor"
             if not exist then restart
+              noalert {{ notifications }}
             if not exist then exec "/root/go/bin/noti-{{ prefix }}service.sh"
               repeat every 1 cycles
+              noalert {{ notifications }}
     when: systemdfile == true and createcommands == True and monit == True
     notify:
       - Restart monit

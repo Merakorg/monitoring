@@ -5,7 +5,7 @@
       state: absent
     notify:
       - Restart systemd
-    when: systemdfile == false
+    when: systemdfile == false or validator == false
 
   - name: Create Unit file
     copy:
@@ -42,17 +42,17 @@
         WantedBy=multi-user.target
     notify:
       - Restart systemd
-    when: systemdfile == true
+    when: systemdfile == true and validator != false
 
   - name: Disable service
     service: name={{ item }} enabled=no state=stopped
     with_items:
       - "{{ prefix }}cosmovisor"
-    when: systemdfile != true
+    when: systemdfile != true  or validator == false
     ignore_errors: true
 
   - name: Enable service
     service: name={{ item }} enabled=yes state=started
     with_items:
       - "{{ prefix }}cosmovisor"
-    when: systemdfile == true
+    when: systemdfile == true and validator != false

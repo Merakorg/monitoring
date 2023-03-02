@@ -7,7 +7,6 @@
       value: 1000
     when: cosmospath !=  False
 
-
   - name: Adjust state-sync keep-recent
     ini_file:
       path: "{{cosmospath}}/config/app.toml"
@@ -15,8 +14,6 @@
       option: snapshot-keep-recent
       value: 2
     when: cosmospath !=  False
-
-
 # - name: Enable state-sync consumption
 #   ini_file:
 #     path: "{{cosmospath}}/config/app.toml"
